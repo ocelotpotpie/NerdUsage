@@ -1,0 +1,6 @@
+name: NerdUsage
+main: nu.nerd.nerdusage.NerdUsage
+description: Tracks player usage time
+author: redwall_hp
+version: ${project.version}
+database: true
