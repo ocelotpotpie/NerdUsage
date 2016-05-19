@@ -56,6 +56,9 @@ public class UpdateThread extends BukkitRunnable {
                     plugin.getPlayerMetaTable().save(newMeta);
                     plugin.getPlayerMetaCache().put(uuid, newMeta);
                 }
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().info(String.format("Loading player %s", player.getName()));
+                }
                 iterator.remove();
             }
             plugin.getDatabase().commitTransaction();
@@ -68,13 +71,16 @@ public class UpdateThread extends BukkitRunnable {
 
 
     private void processUpdateQueue() {
-        if (plugin.getPlayerLoadQueue().size() < 1) return;
+        if (plugin.getPlayerUpdateQueue().size() < 1) return;
         plugin.getDatabase().beginTransaction();
         try {
             Iterator<PlayerMeta> iterator = plugin.getPlayerUpdateQueue().iterator();
             while (iterator.hasNext()) {
                 PlayerMeta meta = iterator.next();
                 plugin.getPlayerMetaTable().update(meta);
+                if (plugin.getConfig().getBoolean("debug", false)) {
+                    plugin.getLogger().info(String.format("Updating player %s", meta.getName()));
+                }
                 iterator.remove();
             }
             plugin.getDatabase().commitTransaction();
@@ -91,6 +97,7 @@ public class UpdateThread extends BukkitRunnable {
 
         if (!plugin.getConfig().getBoolean("write_json_file", true)) return;
 
+        long start = System.currentTimeMillis();
         List<String> online = new ArrayList<String>();
         for (PlayerMeta pm : plugin.getPlayerMetaCache().values()) {
             online.add(pm.getName());
@@ -102,9 +109,14 @@ public class UpdateThread extends BukkitRunnable {
         rootElement.put("storage", storage);
 
         try {
+            Gson gson;
             File path = new File(plugin.getDataFolder(), "usage.json");
             Writer writer = new OutputStreamWriter(new FileOutputStream(path), "UTF-8");
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            if (plugin.getConfig().getBoolean("debug", false)) {
+                gson = new GsonBuilder().setPrettyPrinting().create();
+            } else {
+                gson = new GsonBuilder().create();
+            }
             gson.toJson(rootElement, writer);
             writer.close();
         } catch (Exception ex) {
@@ -113,6 +125,10 @@ public class UpdateThread extends BukkitRunnable {
             } else {
                 plugin.getLogger().warning("Error writing JSON: " + ex.getMessage());
             }
+        }
+
+        if (plugin.getConfig().getBoolean("debug", false)) {
+            plugin.getLogger().info(String.format("Wrote usage.json in %dms", System.currentTimeMillis() - start));
         }
 
     }

@@ -33,7 +33,7 @@ public class UsageTask extends BukkitRunnable {
         cleanCache();
         lastRun = System.currentTimeMillis();
         if (plugin.getConfig().getBoolean("debug", false)) {
-            plugin.getLogger().info(String.format("Completed player iteration in %dms", start - System.currentTimeMillis()));
+            plugin.getLogger().info(String.format("Completed player iteration in %dms", System.currentTimeMillis() - start));
         }
     }
 
