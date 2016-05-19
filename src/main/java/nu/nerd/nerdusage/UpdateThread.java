@@ -32,37 +32,29 @@ public class UpdateThread extends BukkitRunnable {
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
-            processQueue();
+            processLoadQueue();
+            processUpdateQueue();
         }
-        processQueue();
+        processLoadQueue();
+        processUpdateQueue();
     }
 
 
-    private void processQueue() {
-
-        if (plugin.getPlayerUpdateQueue().size() < 1) return;
-
-        //todo: implement online players
-
-        long startTime = System.currentTimeMillis();
-        HashMap<UUID, PlayerMeta> playerMetaMap = plugin.getPlayerMetaTable().getMetaForQueuedPlayers();
-
+    private void processLoadQueue() {
+        if (plugin.getPlayerLoadQueue().size() < 1) return;
         plugin.getDatabase().beginTransaction();
         try {
-            Iterator<QueuedPlayer> iterator = plugin.getPlayerUpdateQueue().iterator();
+            Iterator<PlayerAbstract> iterator = plugin.getPlayerLoadQueue().iterator();
             while (iterator.hasNext()) {
-                QueuedPlayer queued = iterator.next();
-                if (!playerMetaMap.containsKey(queued.getUuid())) {
-                    PlayerMeta meta = new PlayerMeta(queued.getUuid().toString(), queued.getName());
-                    meta.setTime(queued.getTimeIncrement());
-                    plugin.getPlayerMetaTable().save(meta);
+                PlayerAbstract player = iterator.next();
+                UUID uuid = player.getUuid();
+                PlayerMeta meta = plugin.getPlayerMetaTable().getPlayer(uuid);
+                if (meta != null) {
+                    plugin.getPlayerMetaCache().put(uuid, meta);
                 } else {
-                    PlayerMeta meta = playerMetaMap.get(queued.getUuid());
-                    if (queued.getPitch() == meta.getPitch() && queued.getYaw() == meta.getYaw()) {
-                        iterator.remove();
-                        continue;
-                    }
-                    plugin.getPlayerMetaTable().updatePlayerMeta(meta, queued, startTime);
+                    PlayerMeta newMeta = new PlayerMeta(player.getUuid().toString(), player.getName());
+                    plugin.getPlayerMetaTable().save(newMeta);
+                    plugin.getPlayerMetaCache().put(uuid, newMeta);
                 }
                 iterator.remove();
             }
@@ -71,23 +63,41 @@ public class UpdateThread extends BukkitRunnable {
             ex.printStackTrace();
         } finally {
             plugin.getDatabase().endTransaction();
-            writeJson();
-            long runTime = System.currentTimeMillis() - startTime;
-            if (plugin.getConfig().getBoolean("debug", false)) {
-                plugin.getLogger().info(String.format("Updated usage in %dms", runTime));
-            }
         }
+    }
 
+
+    private void processUpdateQueue() {
+        if (plugin.getPlayerLoadQueue().size() < 1) return;
+        plugin.getDatabase().beginTransaction();
+        try {
+            Iterator<PlayerMeta> iterator = plugin.getPlayerUpdateQueue().iterator();
+            while (iterator.hasNext()) {
+                PlayerMeta meta = iterator.next();
+                plugin.getPlayerMetaTable().update(meta);
+                iterator.remove();
+            }
+            plugin.getDatabase().commitTransaction();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            plugin.getDatabase().endTransaction();
+            writeJson();
+        }
     }
 
 
     private void writeJson() {
 
-        if (plugin.getPlayerUpdateQueue().size() > 0) return;
         if (!plugin.getConfig().getBoolean("write_json_file", true)) return;
 
+        List<String> online = new ArrayList<String>();
+        for (PlayerMeta pm : plugin.getPlayerMetaCache().values()) {
+            online.add(pm.getName());
+        }
+
         List<PlayerMeta> playerMetas = plugin.getPlayerMetaTable().getAllPlayers();
-        Storage storage = new Storage(playerMetas);
+        Storage storage = new Storage(playerMetas, online);
         HashMap<String, Object> rootElement = new HashMap<String, Object>();
         rootElement.put("storage", storage);
 

@@ -9,13 +9,14 @@ public class Storage {
 
     public UsageStats usagestats;
     public long lastUpdate;
-    public String[] online;
+    public List<String> online;
 
     public Storage() {}
 
-    public Storage(List<PlayerMeta> playerMetaList) {
+    public Storage(List<PlayerMeta> playerMetaList, List<String> online) {
         this.lastUpdate = System.currentTimeMillis();
         this.usagestats = new UsageStats(playerMetaList);
+        this.online = online;
     }
 
 }

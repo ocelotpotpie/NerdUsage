@@ -6,6 +6,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.persistence.PersistenceException;
 import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
@@ -14,7 +16,9 @@ public class NerdUsage extends JavaPlugin {
 
     public static NerdUsage instance;
     private PlayerMetaTable playerMetaTable;
-    private ConcurrentLinkedQueue<QueuedPlayer> playerUpdateQueue;
+    private ConcurrentHashMap<UUID, PlayerMeta> playerMetaCache;
+    private ConcurrentLinkedQueue<PlayerAbstract> playerLoadQueue;
+    private ConcurrentLinkedQueue<PlayerMeta> playerUpdateQueue;
 
 
     public void onEnable() {
@@ -24,10 +28,13 @@ public class NerdUsage extends JavaPlugin {
 
         setupDatabase();
         this.playerMetaTable = new PlayerMetaTable(this);
-        this.playerUpdateQueue = new ConcurrentLinkedQueue<QueuedPlayer>();
+        this.playerMetaCache = new ConcurrentHashMap<UUID, PlayerMeta>();
+        this.playerLoadQueue = new ConcurrentLinkedQueue<PlayerAbstract>();
+        this.playerUpdateQueue = new ConcurrentLinkedQueue<PlayerMeta>();
 
         new UsageTask();
         new UpdateThread();
+        new UsageListener();
 
     }
 
@@ -61,7 +68,17 @@ public class NerdUsage extends JavaPlugin {
     }
 
 
-    public ConcurrentLinkedQueue<QueuedPlayer> getPlayerUpdateQueue() {
+    public ConcurrentHashMap<UUID, PlayerMeta> getPlayerMetaCache() {
+        return playerMetaCache;
+    }
+
+
+    public ConcurrentLinkedQueue<PlayerAbstract> getPlayerLoadQueue() {
+        return playerLoadQueue;
+    }
+
+
+    public ConcurrentLinkedQueue<PlayerMeta> getPlayerUpdateQueue() {
         return playerUpdateQueue;
     }
 

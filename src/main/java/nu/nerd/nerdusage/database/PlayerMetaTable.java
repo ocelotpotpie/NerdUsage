@@ -1,11 +1,9 @@
 package nu.nerd.nerdusage.database;
 
 
-import com.avaje.ebean.Ebean;
 import com.avaje.ebean.Query;
 import com.avaje.ebean.SqlUpdate;
 import nu.nerd.nerdusage.NerdUsage;
-import nu.nerd.nerdusage.QueuedPlayer;
 
 import java.util.*;
 
@@ -30,38 +28,18 @@ public class PlayerMetaTable {
     }
 
 
-    public HashMap<UUID, PlayerMeta> getMetaForQueuedPlayers() {
-        Set<String> ids = new HashSet<String>();
-        for (QueuedPlayer p : plugin.getPlayerUpdateQueue()) {
-            ids.add(p.getUuid().toString());
-        }
-        Query<PlayerMeta> query = plugin.getDatabase().find(PlayerMeta.class).where().in("uuid", ids).query();
-        if (query != null) {
-            HashMap<UUID, PlayerMeta> map = new HashMap<UUID, PlayerMeta>();
-            for (PlayerMeta pm : query.findList()) {
-                map.put(UUID.fromString(pm.getUuid()), pm);
+    public PlayerMeta getPlayer(UUID uuid) {
+        try {
+            Query<PlayerMeta> query =  plugin.getDatabase().find(PlayerMeta.class).where().eq("uuid", uuid.toString()).query();
+            if (query != null) {
+                return query.findUnique();
+            } else {
+                return null;
             }
-            return map;
-        } else {
-            return new HashMap<UUID, PlayerMeta>();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
         }
-    }
-
-
-    public void updatePlayerMeta(PlayerMeta meta, QueuedPlayer queued, long time) {
-        meta.setPitch(queued.getPitch());
-        meta.setYaw(queued.getYaw());
-        meta.setTime(meta.getTime() + queued.getTimeIncrement());
-        Calendar today = Calendar.getInstance();
-        today.setTimeInMillis(time);
-        Calendar seen = Calendar.getInstance();
-        seen.setTime(meta.getSeen());
-        if (today.get(Calendar.YEAR) != seen.get(Calendar.YEAR) && today.get(Calendar.DAY_OF_YEAR) != seen.get(Calendar.DAY_OF_YEAR)) {
-            meta.setDays(meta.getDays() + 1);
-        }
-        meta.setSeen(today.getTime());
-        meta.setName(queued.getName());
-        update(meta);
     }
 
 
