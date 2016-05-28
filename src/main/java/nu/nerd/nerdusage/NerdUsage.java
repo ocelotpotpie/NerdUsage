@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class NerdUsage extends JavaPlugin {
@@ -19,6 +20,7 @@ public class NerdUsage extends JavaPlugin {
     private ConcurrentHashMap<UUID, PlayerMeta> playerMetaCache;
     private ConcurrentLinkedQueue<PlayerAbstract> playerLoadQueue;
     private ConcurrentLinkedQueue<PlayerMeta> playerUpdateQueue;
+    private AtomicBoolean jsonSemaphore;
 
 
     public void onEnable() {
@@ -31,6 +33,8 @@ public class NerdUsage extends JavaPlugin {
         this.playerMetaCache = new ConcurrentHashMap<UUID, PlayerMeta>();
         this.playerLoadQueue = new ConcurrentLinkedQueue<PlayerAbstract>();
         this.playerUpdateQueue = new ConcurrentLinkedQueue<PlayerMeta>();
+        this.jsonSemaphore = new AtomicBoolean();
+        this.jsonSemaphore.set(false);
 
         new UsageTask();
         new UpdateThread();
@@ -80,6 +84,11 @@ public class NerdUsage extends JavaPlugin {
 
     public ConcurrentLinkedQueue<PlayerMeta> getPlayerUpdateQueue() {
         return playerUpdateQueue;
+    }
+
+
+    public AtomicBoolean getJsonSemaphore() {
+        return jsonSemaphore;
     }
 
 

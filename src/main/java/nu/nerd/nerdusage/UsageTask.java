@@ -30,6 +30,7 @@ public class UsageTask extends BukkitRunnable {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             updatePlayer(player, timeIncrement);
         }
+        plugin.getJsonSemaphore().set(true);
         cleanCache();
         lastRun = System.currentTimeMillis();
         if (plugin.getConfig().getBoolean("debug", false)) {

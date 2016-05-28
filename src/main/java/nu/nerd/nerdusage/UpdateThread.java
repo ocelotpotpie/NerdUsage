@@ -34,9 +34,11 @@ public class UpdateThread extends BukkitRunnable {
             }
             processLoadQueue();
             processUpdateQueue();
+            writeJson();
         }
         processLoadQueue();
         processUpdateQueue();
+        writeJson();
     }
 
 
@@ -88,7 +90,6 @@ public class UpdateThread extends BukkitRunnable {
             ex.printStackTrace();
         } finally {
             plugin.getDatabase().endTransaction();
-            writeJson();
         }
     }
 
@@ -96,6 +97,7 @@ public class UpdateThread extends BukkitRunnable {
     private void writeJson() {
 
         if (!plugin.getConfig().getBoolean("write_json_file", true)) return;
+        if (!plugin.getJsonSemaphore().get()) return;
 
         long start = System.currentTimeMillis();
         List<String> online = new ArrayList<String>();
@@ -126,6 +128,8 @@ public class UpdateThread extends BukkitRunnable {
                 plugin.getLogger().warning("Error writing JSON: " + ex.getMessage());
             }
         }
+
+        plugin.getJsonSemaphore().set(false);
 
         if (plugin.getConfig().getBoolean("debug", false)) {
             plugin.getLogger().info(String.format("Wrote usage.json in %dms", System.currentTimeMillis() - start));
