@@ -8,15 +8,11 @@ import java.util.List;
 public class Storage {
 
     public UsageStats usagestats;
-    public long lastUpdate;
-    public List<String> online;
 
     public Storage() {}
 
     public Storage(List<PlayerMeta> playerMetaList, List<String> online) {
-        this.lastUpdate = System.currentTimeMillis();
-        this.usagestats = new UsageStats(playerMetaList);
-        this.online = online;
+        this.usagestats = new UsageStats(playerMetaList, online);
     }
 
 }
