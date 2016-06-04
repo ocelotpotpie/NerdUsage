@@ -50,7 +50,7 @@ public class UsageTask extends BukkitRunnable {
                 today.setTimeInMillis(System.currentTimeMillis());
                 Calendar seen = Calendar.getInstance();
                 seen.setTime(meta.getSeen());
-                if (today.get(Calendar.YEAR) != seen.get(Calendar.YEAR) && today.get(Calendar.DAY_OF_YEAR) != seen.get(Calendar.DAY_OF_YEAR)) {
+                if (today.get(Calendar.YEAR) != seen.get(Calendar.YEAR) || today.get(Calendar.DAY_OF_YEAR) != seen.get(Calendar.DAY_OF_YEAR)) {
                     meta.setDays(meta.getDays() + 1);
                 }
                 meta.setSeen(today.getTime());
