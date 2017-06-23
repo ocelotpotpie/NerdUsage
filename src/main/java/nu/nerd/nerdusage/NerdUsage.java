@@ -1,5 +1,8 @@
 package nu.nerd.nerdusage;
 
+import com.avaje.ebean.EbeanServer;
+import nu.nerd.BukkitEbean.EbeanBuilder;
+import nu.nerd.BukkitEbean.EbeanHelper;
 import nu.nerd.nerdusage.database.PlayerMeta;
 import nu.nerd.nerdusage.database.PlayerMetaTable;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -21,6 +24,7 @@ public class NerdUsage extends JavaPlugin {
     private ConcurrentLinkedQueue<PlayerAbstract> playerLoadQueue;
     private ConcurrentLinkedQueue<PlayerMeta> playerUpdateQueue;
     private AtomicBoolean jsonSemaphore;
+    private EbeanServer db;
 
 
     public void onEnable() {
@@ -49,17 +53,22 @@ public class NerdUsage extends JavaPlugin {
     }
 
 
+    public EbeanServer getDatabase() {
+        return db;
+    }
+
+
     private void setupDatabase() {
+        db = new EbeanBuilder(this).setClasses(getDatabaseClasses()).build();
         try {
             getDatabase().find(PlayerMeta.class).findRowCount();
         } catch (PersistenceException ex) {
             getLogger().info("Initializing database.");
-            installDDL();
+            EbeanHelper.installDDL(db);
         }
     }
 
 
-    @Override
     public ArrayList<Class<?>> getDatabaseClasses() {
         ArrayList<Class<?>> list = new ArrayList<Class<?>>();
         list.add(PlayerMeta.class);
